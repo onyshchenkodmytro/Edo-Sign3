@@ -2,25 +2,23 @@ using Duende.IdentityServer;
 using Duende.IdentityServer.Models;
 using EdoAuthServer.Data;
 using EdoAuthServer.Models;
-
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseUrls("http://0.0.0.0:7090");
+
 // =======================================================
-// 1. Підключення до спільної БД EdoSign.Lab-3
+// 1. РџС–РґРєР»СЋС‡РµРЅРЅСЏ РґРѕ СЃРїС–Р»СЊРЅРѕС— Р‘Р” EdoSign.Lab-3
 // =======================================================
-// ? Видаляємо "?? Data Source=app.db", щоб не створювалась нова локальна БД
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
-    // Якщо MSSQL:
-    // options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
 // =======================================================
-// 2. ASP.NET Identity — ті ж користувачі, що й у головному проєкті
+// 2. ASP.NET Identity вЂ” С‚С– Р¶ РєРѕСЂРёСЃС‚СѓРІР°С‡С–, С‰Рѕ Р№ Сѓ РіРѕР»РѕРІРЅРѕРјСѓ РїСЂРѕС”РєС‚С–
 // =======================================================
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -33,7 +31,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // =======================================================
-// 3. IdentityServer (Duende) + інтеграція з Identity
+// 3. IdentityServer (Duende) + С–РЅС‚РµРіСЂР°С†С–СЏ Р· Identity
 // =======================================================
 builder.Services
     .AddIdentityServer(options =>
@@ -48,7 +46,7 @@ builder.Services
     .AddInMemoryIdentityResources(Config.IdentityResources)
     .AddInMemoryApiScopes(Config.ApiScopes)
     .AddInMemoryClients(Config.Clients)
-    .AddDeveloperSigningCredential(); // тимчасовий сертифікат
+    .AddDeveloperSigningCredential(); // С‚РёРјС‡Р°СЃРѕРІРёР№ СЃРµСЂС‚РёС„С–РєР°С‚
 
 // =======================================================
 // 4. MVC + Razor Pages
@@ -73,11 +71,10 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseIdentityServer(); 
+app.UseIdentityServer();
 app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapDefaultControllerRoute();
 
 app.Run();
-
