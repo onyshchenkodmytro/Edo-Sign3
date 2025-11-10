@@ -47,6 +47,7 @@ builder.Services.AddAuthentication(options =>
 {
     // === Îñíîâí³ ïàðàìåòðè OpenID Connect ===
     options.Authority = "http://localhost:7090"; // URL EdoAuthServer
+    options.RequireHttpsMetadata = false; 
     options.ClientId = "mvc";
     options.ClientSecret = "secret";
     options.ResponseType = "code";
