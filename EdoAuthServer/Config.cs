@@ -47,9 +47,9 @@ public static class Config
             ClientSecrets = { new Secret("secret".Sha256()) },
 
             
-            RedirectUris =           { "https://localhost:7275/signin-oidc" },
-            PostLogoutRedirectUris = { "https://localhost:7275/signout-callback-oidc" },
-            FrontChannelLogoutUri =  "https://localhost:7275/signout-oidc",
+            RedirectUris =           { "http://localhost:7275/signin-oidc" },
+            PostLogoutRedirectUris = { "http://localhost:7275/signout-callback-oidc" },
+            FrontChannelLogoutUri =  "http://localhost:7275/signout-oidc",
 
             // Scopes, які клієнт може запитувати
             AllowedScopes = { "openid", "profile", "email", "custom_profile", "edolab.api" },
