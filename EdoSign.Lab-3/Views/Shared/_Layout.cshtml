@@ -1,0 +1,50 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using EdoSign.Lab_3.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8" />
+    <title>EdoSign Lab 3</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+    <header>
+        <nav>
+            <a asp-controller="Home" asp-action="Index">Головна</a>
+            <a asp-controller="Subroutines" asp-action="Upload">Завантаження</a>
+            <a asp-controller="Subroutines" asp-action="SignFile">Підпис файлу</a>
+            <a asp-controller="Subroutines" asp-action="VerifyFile">Перевірка підпису</a>
+
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <a asp-controller="Account" asp-action="Profile">Профіль</a>
+                <a asp-controller="Account" asp-action="Logout">Вихід</a>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login">Вхід</a>
+                <a asp-controller="Account" asp-action="Register">Реєстрація</a>
+
+                @* 🔹 Кнопка для входу через зовнішню систему (SSO / OAuth2) *@
+                <form asp-controller="Account" asp-action="ExternalLogin" method="post" style="display:inline;">
+                    <input type="hidden" name="provider" value="oidc" />
+                    <button type="submit" class="btn btn-outline-primary" style="margin-left:10px;">
+                        Увійти через SSO
+                    </button>
+                </form>
+            }
+        </nav>
+    </header>
+
+    <main class="container">
+        @RenderBody()
+    </main>
+
+    @* Цей рядок обов’язковий, щоб не було помилки "section not rendered" *@
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

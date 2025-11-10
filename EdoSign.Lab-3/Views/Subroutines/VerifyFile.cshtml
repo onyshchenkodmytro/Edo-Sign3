@@ -1,0 +1,19 @@
+﻿@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Перевірка підпису";
+}
+
+<h2>Перевірка підпису</h2>
+
+<form asp-action="VerifyFile" method="post">
+    <div class="mb-3">
+        <label>File ID:</label>
+        <input name="fileId" class="form-control" placeholder="Введіть File ID..." />
+    </div>
+    <button type="submit" class="btn btn-primary">Перевірити</button>
+</form>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info mt-4">@ViewBag.Message</div>
+}

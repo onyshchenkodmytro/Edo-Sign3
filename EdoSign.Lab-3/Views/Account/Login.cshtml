@@ -1,0 +1,28 @@
+﻿@model EdoSign.Lab_3.Models.ViewModels.LoginViewModel
+@{
+    Layout = "_Layout";
+}
+<h2>Вхід</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div>@TempData["Error"]</div>
+}
+
+<form asp-action="Login" method="post">
+    <div>
+        <label asp-for="UserNameOrEmail"></label>
+        <input asp-for="UserNameOrEmail" />
+        <span asp-validation-for="UserNameOrEmail"></span>
+    </div>
+    <div>
+        <label asp-for="Password"></label>
+        <input asp-for="Password" />
+        <span asp-validation-for="Password"></span>
+    </div>
+    <div>
+        <input asp-for="RememberMe" /> <label asp-for="RememberMe"></label>
+    </div>
+    <button type="submit">Увійти</button>
+</form>
+

@@ -1,0 +1,24 @@
+﻿@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Завантаження файлу";
+}
+
+<h2>Завантаження файлу</h2>
+
+<form asp-action="Upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" class="form-control" />
+    <button type="submit" class="btn btn-primary mt-3">Завантажити</button>
+</form>
+
+@if (ViewBag.FileId != null)
+{
+    <div class="alert alert-success mt-4">
+        ✅ Файл збережено!<br />
+        <b>File ID:</b> @ViewBag.FileId
+    </div>
+}
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-warning mt-3">@ViewBag.Message</div>
+}

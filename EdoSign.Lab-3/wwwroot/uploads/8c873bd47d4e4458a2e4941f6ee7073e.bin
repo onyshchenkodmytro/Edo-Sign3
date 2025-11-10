@@ -1,0 +1,486 @@
+// Завдання 1
+
+// 1. Створення 10 записів напрямів діяльності
+const directionsData = [
+    {
+        id: 101,
+        name: "Програмне забезпечення",
+        department: "Відділ Розробки ПЗ",
+        govLinkText: "Співпраця з Міністерством цифрової трансформації",
+        dailyUsersDay1: 1500,
+        dailyUsersDay2: 1800,
+        durationMonths: 12, // Тривалість у місяцях
+    },
+    {
+        id: 102,
+        name: "Хмарні технології",
+        department: "Відділ Хмарних Рішень",
+        govLinkText: "Співпраця з Держспецзв’язку",
+        dailyUsersDay1: 850,
+        dailyUsersDay2: 950,
+        durationMonths: 6,
+    },
+    {
+        id: 103,
+        name: "Освітні проекти",
+        department: "Відділ Навчання",
+        govLinkText: "Співпраця з Міністерством освіти і науки",
+        dailyUsersDay1: 2200,
+        dailyUsersDay2: 2150,
+        durationMonths: 24,
+    },
+    {
+        id: 104,
+        name: "Кібербезпека",
+        department: "Відділ Безпеки",
+        govLinkText: "Співпраця з СБУ",
+        dailyUsersDay1: 1900,
+        dailyUsersDay2: 1750,
+        durationMonths: 12,
+    },
+    {
+        id: 105,
+        name: "Штучний інтелект",
+        department: "Відділ AI/ML",
+        govLinkText: "Без прямої співпраці",
+        dailyUsersDay1: 3000,
+        dailyUsersDay2: 3200,
+        durationMonths: 18,
+    },
+    {
+        id: 106,
+        name: "Блокчейн",
+        department: "Відділ Фінансових Технологій",
+        govLinkText: "Співпраця з НБУ",
+        dailyUsersDay1: 700,
+        dailyUsersDay2: 650,
+        durationMonths: 6,
+    },
+    {
+        id: 107,
+        name: "Інтернет речей (IoT)",
+        department: "Відділ Розробки Пристроїв",
+        govLinkText: "Співпраця з Мінекономіки",
+        dailyUsersDay1: 1100,
+        dailyUsersDay2: 1050,
+        durationMonths: 36,
+    },
+    {
+        id: 108,
+        name: "Аналітика даних",
+        department: "Відділ Аналізу",
+        govLinkText: "Без прямої співпраці",
+        dailyUsersDay1: 1600,
+        dailyUsersDay2: 1650,
+        durationMonths: 12,
+    },
+    {
+        id: 109,
+        name: "VR/AR",
+        department: "Відділ Іммерсивних Технологій",
+        govLinkText: "Співпраця з Міністерством культури",
+        dailyUsersDay1: 900,
+        dailyUsersDay2: 880,
+        durationMonths: 18,
+    },
+    {
+        id: 110,
+        name: "Мобільна розробка",
+        department: "Відділ Розробки ПЗ",
+        govLinkText: "Без прямої співпраці",
+        dailyUsersDay1: 2500,
+        dailyUsersDay2: 2400,
+        durationMonths: 24,
+    },
+];
+
+/* ---------------------------------------------------------------- */
+
+/**
+ * Впорядковує напрями за тривалістю послуги та знаходить середню кількість користувачів
+ * для напрямів з однаковою тривалістю.
+ */
+function processDurationAndUsers(dataArray) {
+    // Впорядкування за тривалістю (durationMonths)
+    // Використовуємо метод sort()
+    dataArray.sort((a, b) => a.durationMonths - b.durationMonths);
+    console.log("1.1. Впорядковані напрями за тривалістю послуги:", dataArray);
+
+    // Групування за тривалістю та обчислення середньої кількості користувачів (Day1)
+    const durationGroups = {};
+    for (const direction of dataArray) { // Цикл for...of
+        const duration = direction.durationMonths;
+        if (!durationGroups[duration]) {
+            durationGroups[duration] = { totalUsers: 0, count: 0 };
+        }
+        durationGroups[duration].totalUsers += direction.dailyUsersDay1;
+        durationGroups[duration].count++;
+    }
+
+    const averageUsersByDuration = {};
+    // Цикл for...in для об'єкта
+    for (const duration in durationGroups) {
+        const group = durationGroups[duration];
+        const average = Number((group.totalUsers / group.count).toFixed(2)); // Перетворення типу
+        averageUsersByDuration[duration] = average;
+    }
+
+    console.log("1.1. Середня кількість користувачів (Day1) для однакової тривалості (у місяцях):", averageUsersByDuration);
+}
+
+/**
+ * Знаходить напрям з мінімальною кількістю користувачів за добу_2 та виводить відділ.
+ */
+function findMinUsersDirection(dataArray) {
+    let minUsers = Infinity; // Використовуємо Number.POSITIVE_INFINITY
+    let targetDepartment = '';
+    let found = false;
+
+    // Цикл while
+    let i = 0;
+    while (i < dataArray.length) {
+        const direction = dataArray[i];
+        if (direction.dailyUsersDay2 < minUsers) {
+            minUsers = direction.dailyUsersDay2;
+            targetDepartment = direction.department;
+            found = true;
+        }
+        i++;
+    }
+
+    // Умовна конструкція if-else
+    if (found) {
+        console.log(`1.2. Напрям з мінімальною кількістю користувачів за добу_2 (${minUsers}) реалізує:`, targetDepartment);
+    } else {
+        console.log("1.2. Дані для пошуку мінімальної кількості користувачів відсутні.");
+    }
+}
+
+/**
+ * Додає новий напрям: в кінець, якщо немає інфо, або за id, якщо вся інфо є.
+ */
+function addNewDirection(dataArray, newDirection) {
+    // Перевірка наявності всієї необхідної інформації
+    const hasAllInfo = Boolean(newDirection.id) && String(newDirection.name).length > 0 && Number.isFinite(newDirection.durationMonths);
+
+    if (hasAllInfo) {
+        // Якщо вся інфо є, шукаємо місце за внутрішнім id
+        let added = false;
+        // Цикл do-while
+        let i = 0;
+        do {
+            if (i >= dataArray.length || newDirection.id < dataArray[i].id) {
+                dataArray.splice(i, 0, newDirection); // Вставка за допомогою splice()
+                added = true;
+                break;
+            }
+            i++;
+        } while (i < dataArray.length);
+
+        // Якщо додається в кінець (id більше за всі існуючі)
+        if (!added) {
+            dataArray.push(newDirection);
+        }
+
+        console.log(`1.3. Новий напрям '${newDirection.name}' додано за ID ${newDirection.id}. Новий розмір масиву: ${dataArray.length}`);
+    } else {
+        // Якщо відсутня хоч якась інфо, додаємо в кінець списку
+        dataArray.push(newDirection);
+        console.log(`1.3. Новий напрям (неповна інфо) додано в кінець. Новий розмір масиву: ${dataArray.length}`);
+    }
+}
+
+/**
+ * Обчислює тривалість надання декількох послуг одночасно.
+ * @param {string} departmentName - Назва відділу, для якого рахуємо.
+ * @param {number} duration - Тривалість однієї послуги (у місяцях).
+ * @param {number} servicesCount - Кількість послуг.
+ * @returns {number} Нова тривалість.
+ */
+function calculateCombinedDuration(departmentName, servicesCount, duration) {
+    const isSingleService = servicesCount === 1;
+    const isUpToThree = servicesCount > 1 && servicesCount <= 3;
+    const isManyServices = servicesCount > 3;
+    let factor;
+
+    // Конструкція switch
+    switch (true) {
+        case isSingleService:
+            factor = 0.95;
+            break;
+        case isUpToThree:
+            factor = 0.8; // За умовою 'до 3 послуг', візьмемо 0.8, щоб відрізняти від 1 послуги.
+            break;
+        case isManyServices:
+            factor = 0.6;
+            break;
+        default:
+            factor = 1; // Дефолтне значення
+    }
+
+    // Використання об'єкта Math
+    const result = Math.round(duration * factor * servicesCount);
+
+    return result;
+}
+
+/**
+ * Основна функція для запуску завдань з напрямами.
+ */
+function runDirectionsTasks() {
+    console.log("--- ЗАВДАННЯ 1: НАПРЯМИ ДІЯЛЬНОСТІ ---");
+
+    // 1.1. Впорядкування та середня кількість
+    processDurationAndUsers(directionsData);
+    console.log("---------------------------------------");
+
+    // 1.2. Мінімальна кількість користувачів
+    findMinUsersDirection(directionsData);
+    console.log("---------------------------------------");
+
+    // 1.3. Додавання нового напряму
+    const newDirFull = {
+        id: 100,
+        name: "Квантові обчислення",
+        department: "Відділ R&D",
+        govLinkText: "Співпраця з НАНУ",
+        dailyUsersDay1: 500,
+        dailyUsersDay2: 550,
+        durationMonths: 48,
+    };
+    const newDirPartial = {
+        id: 999,
+        name: "Архівування",
+        department: "Відділ Обслуговування",
+        dailyUsersDay1: 10,
+        dailyUsersDay2: 10,
+        // durationMonths відсутній (неповна інфо)
+    };
+
+    addNewDirection(directionsData, newDirFull); // Додаємо повну інфо
+    addNewDirection(directionsData, newDirPartial); // Додаємо неповну інфо
+    console.log("Остаточний масив напрямів:", directionsData);
+    console.log("---------------------------------------");
+
+    // 1.4. Обчислення тривалості кількох послуг
+    const depName = "Відділ Розробки ПЗ";
+    const service1Duration = 12; // місяців
+    const servicesCount1 = 1; // Одна послуга
+    const servicesCount2 = 3; // Три послуги
+    const servicesCount3 = 5; // Багато послуг
+
+    const combinedDuration1 = calculateCombinedDuration(depName, servicesCount1, service1Duration);
+    const combinedDuration2 = calculateCombinedDuration(depName, servicesCount2, service1Duration);
+    const combinedDuration3 = calculateCombinedDuration(depName, servicesCount3, service1Duration);
+
+    console.log(`1.4. Тривалість 1 послуги: ${combinedDuration1} місяців (коефіцієнт 0.95).`);
+    console.log(`1.4. Тривалість 3 послуг: ${combinedDuration2} місяців (коефіцієнт 0.8).`);
+    console.log(`1.4. Тривалість 5 послуг: ${combinedDuration3} місяців (коефіцієнт 0.6).`);
+}
+
+// Запуск завдань 1
+runDirectionsTasks();
+
+
+// Завдання 2
+
+// 2. Створення класу для облікових записів користувачів (PascalCase)
+class UserAccount {
+    // Приватні змінні (префікс _)
+    #firstName;
+    #lastName;
+    #age;
+    #education;
+    #feedbackPurpose;
+    #submissionDate;
+    #submissionTime; // Symbol для унікального поля, якщо потрібно, але тут просто String
+
+    constructor(lastName, firstName, age, education, feedbackPurpose, dateString, timeString) {
+        this.#lastName = lastName;
+        this.#firstName = firstName;
+        this.#age = Number(age); // Перетворення типу
+        this.#education = education;
+        this.#feedbackPurpose = feedbackPurpose;
+        this.#submissionDate = new Date(dateString); // Об'єкт Date
+        this.#submissionTime = timeString; // "HH:MM"
+    }
+
+    // Геттери для доступу до приватних змінних
+    get fullName() {
+        return `${this.#lastName} ${this.#firstName}`;
+    }
+
+    get submissionDate() {
+        return this.#submissionDate;
+    }
+
+    get submissionTime() {
+        return this.#submissionTime;
+    }
+
+    get age() {
+        return this.#age;
+    }
+
+    get feedbackPurpose() {
+        return this.#feedbackPurpose;
+    }
+
+    get monthSubmitted() {
+        return this.#submissionDate.getMonth(); // 0-11
+    }
+
+    get yearSubmitted() {
+        return this.#submissionDate.getFullYear();
+    }
+
+    // Приватний метод (префікс _)
+    _getHour() {
+        // Використовуємо String.prototype.split() та Number() для отримання години
+        return Number(this.#submissionTime.split(':')[0]);
+    }
+
+    /**
+     * Перевірка, чи було звернення у робочий час (09:00 до 17:00).
+     */
+    isWorkingHours() {
+        const hour = this._getHour();
+        // Використовуємо Boolean() для перетворення результату
+        return Boolean(hour >= 9 && hour < 17);
+    }
+}
+
+// 2. Створення 10 облікових записів (використання PascalCase для конструктора)
+const userAccounts = [
+    new UserAccount("Іваненко", "Іван", 35, "вища", "співпраця", "2025-05-15", "10:30"),
+    new UserAccount("Петренко", "Петро", 28, "вища", "пропозиція", "2025-05-20", "16:45"),
+    new UserAccount("Сидоренко", "Марія", 65, "неповна", "скарга", "2025-05-22", "19:15"), // Похилий вік, неробочий час
+    new UserAccount("Коваленко", "Віктор", 42, "професійна", "співпраця", "2025-06-01", "11:00"),
+    new UserAccount("Мельник", "Олена", 72, "повна", "пропозиція", "2025-06-10", "22:05"), // Похилий вік, неробочий час
+    new UserAccount("Кузьменко", "Андрій", 30, "вища", "помилка", "2025-06-12", "14:20"),
+    new UserAccount("Захарченко", "Наталія", 55, "вища", "скарга", "2025-07-05", "08:30"), // Інші
+    new UserAccount("Клименко", "Олег", 60, "неповна", "пропозиція", "2025-07-15", "18:00"), // Інші
+    new UserAccount("Ткаченко", "Сергій", 22, "повна", "співпраця", "2025-05-25", "15:10"),
+    new UserAccount("Шевченко", "Людмила", 48, "вища", "пропозиція", "2025-06-28", "13:00"),
+];
+
+/* ---------------------------------------------------------------- */
+
+/**
+ * 2.1. Виведення переліку користувачів, які звернулись продовж певного місяця, в деякий заданий момент часу.
+ */
+function getUsersInMonthAndTime(monthIndex, targetTime) {
+    const targetHour = Number(targetTime.split(':')[0]);
+    const targetMinute = Number(targetTime.split(':')[1]);
+
+    const filteredUsers = userAccounts.filter(user => {
+        const submissionMonth = user.monthSubmitted;
+        const submissionHour = user._getHour();
+        const submissionMinute = Number(user.submissionTime.split(':')[1]);
+
+        // Порівнюємо місяць, годину та хвилину (заданий момент часу)
+        return submissionMonth === monthIndex && submissionHour === targetHour && submissionMinute === targetMinute;
+    });
+
+    console.log(`2.1. Користувачі, які звернулись у ${monthIndex + 1}-му місяці о ${targetTime}:`);
+    console.dir(filteredUsers.map(u => u.fullName)); // Використання console.dir()
+}
+
+/**
+ * 2.2. Вивести середній вік користувача.
+ */
+function calculateAverageAge() {
+    let totalAge = 0;
+    // Цикл for...of
+    for (const user of userAccounts) {
+        totalAge += user.age;
+    }
+
+    const averageAge = totalAge / userAccounts.length;
+    // Використання Math.round()
+    console.log(`2.2. Середній вік користувача: ${Math.round(averageAge)} років.`);
+    return averageAge;
+}
+
+/**
+ * 2.3. Поділити користувачів на три класи та знайти їх кількість.
+ */
+function classifyUsers(averageAge) {
+    const classes = {
+        workingHoursAverage: [], // Середній за віком, зі зверненням у робочий час
+        nonWorkingHoursElderly: [], // Похилого віку зі зверненням у неробочий час
+        other: [], // Інші
+    };
+
+    const ELDERLY_AGE = 60; // Похилий вік
+    const AGE_DEVIATION = 10; // Допустиме відхилення від середнього для "середнього за віком"
+
+    // Цикл for
+    for (let i = 0; i < userAccounts.length; i++) {
+        const user = userAccounts[i];
+
+        // "Середній за віком" (в межах ± AGE_DEVIATION від середнього)
+        const isAverageAge = Math.abs(user.age - averageAge) <= AGE_DEVIATION;
+        const isElderly = user.age >= ELDERLY_AGE;
+        const isWorking = user.isWorkingHours();
+
+        // Умовна конструкція if - else if - else
+        if (isAverageAge && isWorking) {
+            classes.workingHoursAverage.push(user.fullName);
+        } else if (isElderly && !isWorking) {
+            classes.nonWorkingHoursElderly.push(user.fullName);
+        } else {
+            classes.other.push(user.fullName);
+        }
+    }
+
+    console.log("2.3. Класифікація користувачів:");
+    console.log(`  - Середній за віком, робочий час: ${classes.workingHoursAverage.length} користувачів. (Приклади: ${classes.workingHoursAverage.slice(0, 3).join(', ')})`);
+    console.log(`  - Похилого віку, неробочий час: ${classes.nonWorkingHoursElderly.length} користувачів. (Приклади: ${classes.nonWorkingHoursElderly.slice(0, 3).join(', ')})`);
+    console.log(`  - Інші: ${classes.other.length} користувачів. (Приклади: ${classes.other.slice(0, 3).join(', ')})`);
+}
+
+/**
+ * 2.4. Сортування користувачів в алфавітному порядку із виведенням мети зворотнього зв’язку.
+ */
+function sortUsersAlphabetically() {
+    // Сортування за прізвищем (lastName)
+    userAccounts.sort((a, b) => {
+        // Оскільки fullName містить прізвище, сортуємо за ним
+        return a.fullName.localeCompare(b.fullName, 'uk', { sensitivity: 'base' });
+    });
+
+    console.log("2.4. Відсортований перелік користувачів (за алфавітом) та мета звернення:");
+    // Використовуємо map() для виводу потрібних полів
+    const sortedList = userAccounts.map(user => ({
+        fullName: user.fullName,
+        feedbackPurpose: user.feedbackPurpose
+    }));
+    console.table(sortedList); // Використовуємо console.table() для зручного виводу
+}
+
+/**
+ * Основна функція для запуску завдань з користувачами.
+ */
+function runUserTasks() {
+    console.log("\n--- ЗАВДАННЯ 2: ОБЛІКОВІ ЗАПИСИ КОРИСТУВАЧІВ (ООП) ---");
+
+    // 2.2. Середній вік (потрібен для 2.3)
+    const averageAge = calculateAverageAge();
+    console.log("---------------------------------------");
+
+    // 2.1. Користувачі за місяцем і часом
+    // Місяць 5 (травень - index 4), час 10:30
+    getUsersInMonthAndTime(4, "10:30");
+    console.log("---------------------------------------");
+
+    // 2.3. Класифікація користувачів
+    classifyUsers(averageAge);
+    console.log("---------------------------------------");
+
+    // 2.4. Сортування користувачів
+    sortUsersAlphabetically();
+}
+
+// Запуск завдань 2
+runUserTasks();
