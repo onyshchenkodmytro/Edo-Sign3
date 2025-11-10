@@ -17,7 +17,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(opt =>
         ?? "Data Source=app.db"));
 
 // =======================================================
-// 2. ASP.NET Identity (локальні акаунти)
+// 2. ASP.NET Identity (Г«Г®ГЄГ Г«ГјГ­Ві Г ГЄГ ГіГ­ГІГЁ)
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(opt =>
     {
@@ -33,25 +33,25 @@ builder.Services
     .AddDefaultTokenProviders();
 
 // =======================================================
-// 3. Authentication (SSO через EdoAuthServer)
+// 3. Authentication (SSO Г·ГҐГ°ГҐГ§ EdoAuthServer)
 builder.Services.AddAuthentication(options =>
 {
-    // cookie-схема використовується для локальної автентифікації
+    // cookie-Г±ГµГҐГ¬Г  ГўГЁГЄГ®Г°ГЁГ±ГІГ®ГўГіВєГІГјГ±Гї Г¤Г«Гї Г«Г®ГЄГ Г«ГјГ­Г®Вї Г ГўГІГҐГ­ГІГЁГґВіГЄГ Г¶ВіВї
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 
-    // коли користувач неавторизований — система викликає SSO
+    // ГЄГ®Г«ГЁ ГЄГ®Г°ГЁГ±ГІГіГўГ Г· Г­ГҐГ ГўГІГ®Г°ГЁГ§Г®ГўГ Г­ГЁГ© вЂ” Г±ГЁГ±ГІГҐГ¬Г  ГўГЁГЄГ«ГЁГЄГ Вє SSO
     options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
 .AddOpenIdConnect("oidc", options =>
 {
-    // === Основні параметри OpenID Connect ===
-    options.Authority = "https://localhost:7090"; // URL EdoAuthServer
+    // === ГЋГ±Г­Г®ГўГ­Ві ГЇГ Г°Г Г¬ГҐГІГ°ГЁ OpenID Connect ===
+    options.Authority = "http://localhost:7090"; // URL EdoAuthServer
     options.ClientId = "mvc";
     options.ClientSecret = "secret";
     options.ResponseType = "code";
 
-    // === Дозволені області (мають збігатися з Config.cs на сервері) ===
+    // === Г„Г®Г§ГўГ®Г«ГҐГ­Ві Г®ГЎГ«Г Г±ГІВі (Г¬Г ГѕГІГј Г§ГЎВіГЈГ ГІГЁГ±Гї Г§ Config.cs Г­Г  Г±ГҐГ°ГўГҐГ°Ві) ===
     options.Scope.Add("openid");
     options.Scope.Add("profile");
     options.Scope.Add("email");
@@ -61,11 +61,11 @@ builder.Services.AddAuthentication(options =>
     options.SaveTokens = true;
     options.GetClaimsFromUserInfoEndpoint = true;
 
-    // ?? Задаємо, які поля використовувати як ім’я користувача / роль
+    // ?? Г‡Г Г¤Г ВєГ¬Г®, ГїГЄВі ГЇГ®Г«Гї ГўГЁГЄГ®Г°ГЁГ±ГІГ®ГўГіГўГ ГІГЁ ГїГЄ ВіГ¬вЂ™Гї ГЄГ®Г°ГЁГ±ГІГіГўГ Г·Г  / Г°Г®Г«Гј
     options.TokenValidationParameters.NameClaimType = "preferred_username";
     options.TokenValidationParameters.RoleClaimType = "role";
 
-    // ?? Під час розробки дозволяємо самопідписаний сертифікат
+    // ?? ГЏВіГ¤ Г·Г Г± Г°Г®Г§Г°Г®ГЎГЄГЁ Г¤Г®Г§ГўГ®Г«ГїВєГ¬Г® Г±Г Г¬Г®ГЇВіГ¤ГЇГЁГ±Г Г­ГЁГ© Г±ГҐГ°ГІГЁГґВіГЄГ ГІ
     options.RequireHttpsMetadata = false;
 });
 
@@ -74,7 +74,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllersWithViews();
 
 // =======================================================
-// 5. Authorization (усі сторінки захищені за потреби)
+// 5. Authorization (ГіГ±Ві Г±ГІГ®Г°ВіГ­ГЄГЁ Г§Г ГµГЁГ№ГҐГ­Ві Г§Г  ГЇГ®ГІГ°ГҐГЎГЁ)
 builder.Services.AddAuthorization();
 
 // =======================================================
@@ -87,7 +87,7 @@ builder.Services.AddScoped<CryptoService>();
 var app = builder.Build();
 
 // =======================================================
-// 8. DB auto-migration (створення / оновлення БД)
+// 8. DB auto-migration (Г±ГІГўГ®Г°ГҐГ­Г­Гї / Г®Г­Г®ГўГ«ГҐГ­Г­Гї ГЃГ„)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -106,8 +106,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseAuthentication();   // ?? спочатку автентифікація
-app.UseAuthorization();    // ?? потім авторизація
+app.UseAuthentication();   // ?? Г±ГЇГ®Г·Г ГІГЄГі Г ГўГІГҐГ­ГІГЁГґВіГЄГ Г¶ВіГї
+app.UseAuthorization();    // ?? ГЇГ®ГІВіГ¬ Г ГўГІГ®Г°ГЁГ§Г Г¶ВіГї
 
 app.MapControllerRoute(
     name: "default",
