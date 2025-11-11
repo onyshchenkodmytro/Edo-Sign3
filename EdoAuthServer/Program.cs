@@ -76,6 +76,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCookiePolicy();
 
 app.UseIdentityServer();
 app.UseAuthorization();
