@@ -5,23 +5,38 @@ using EdoAuthServer.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Слухаємо на 7090
+// =======================================================
+// 0. Загальні налаштування сервера
+// =======================================================
 builder.WebHost.UseUrls("http://0.0.0.0:7090");
 
 // =======================================================
-// 0. Спільне сховище ключів DataProtection
+// 1. Сховище ключів DataProtection
 // =======================================================
+// Це важливо, щоб уникнути помилок типу “key not found in key ring”
+// і щоб підписані cookie / токени не втрачались після рестарту.
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("/home/vagrant/Edo-Sign3/shared-keys"))
-    .SetApplicationName("EdoSign")
+    .SetApplicationName("EdoSign.Shared")
     .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
 // =======================================================
-// 1. Підключення до спільної БД EdoSign.Lab-3
+// 2. Політика для cookie (виправлення SameSite помилок)
+// =======================================================
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+    options.HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.None;
+    options.Secure = Microsoft.AspNetCore.Http.CookieSecurePolicy.None;
+});
+
+// =======================================================
+// 3. База даних
 // =======================================================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -29,7 +44,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 // =======================================================
-// 2. ASP.NET Identity — ті ж користувачі, що й у головному проєкті
+// 4. ASP.NET Identity
 // =======================================================
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -42,7 +57,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // =======================================================
-// 3. IdentityServer (Duende) + інтеграція з Identity
+// 5. IdentityServer (Duende) + інтеграція з Identity
 // =======================================================
 builder.Services
     .AddIdentityServer(options =>
@@ -57,22 +72,23 @@ builder.Services
     .AddInMemoryIdentityResources(Config.IdentityResources)
     .AddInMemoryApiScopes(Config.ApiScopes)
     .AddInMemoryClients(Config.Clients)
-    .AddDeveloperSigningCredential(); // тимчасовий сертифікат
+    // Тимчасовий сертифікат для dev-середовища (HTTP)
+    .AddDeveloperSigningCredential(persistKey: true);
 
 // =======================================================
-// 4. MVC + Razor Pages
+// 6. MVC + Razor Pages
 // =======================================================
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages()
     .WithRazorPagesRoot("/EdoAuthServer.UI/Pages");
 
 // =======================================================
-// 5. Build app
+// 7. Build
 // =======================================================
 var app = builder.Build();
 
 // =======================================================
-// 6. Middleware pipeline
+// 8. Middleware pipeline
 // =======================================================
 if (app.Environment.IsDevelopment())
 {
@@ -81,8 +97,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseRouting();
-app.UseCookiePolicy();
-
+app.UseCookiePolicy();          // важливо: до IdentityServer
 app.UseIdentityServer();
 app.UseAuthorization();
 
