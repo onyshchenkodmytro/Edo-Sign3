@@ -9,6 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseUrls("http://0.0.0.0:7090");
 
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+});
+
+
 // =======================================================
 // 1. Підключення до спільної БД EdoSign.Lab-3
 // =======================================================
