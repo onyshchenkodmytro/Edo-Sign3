@@ -4,16 +4,21 @@ using EdoAuthServer.Data;
 using EdoAuthServer.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Слухаємо на 7090
 builder.WebHost.UseUrls("http://0.0.0.0:7090");
 
-builder.Services.Configure<CookiePolicyOptions>(options =>
-{
-    options.MinimumSameSitePolicy = SameSiteMode.Lax;
-});
-
+// =======================================================
+// 0. Спільне сховище ключів DataProtection
+// =======================================================
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/home/vagrant/Edo-Sign3/shared-keys"))
+    .SetApplicationName("EdoSign")
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
 // =======================================================
 // 1. Підключення до спільної БД EdoSign.Lab-3
@@ -85,3 +90,4 @@ app.MapRazorPages();
 app.MapDefaultControllerRoute();
 
 app.Run();
+
