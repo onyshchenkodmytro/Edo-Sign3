@@ -16,23 +16,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://0.0.0.0:7090");
 
 // =======================================================
-// 1. Сховище ключів DataProtection
+// 1. Спільне сховище ключів DataProtection
 // =======================================================
-// Це важливо, щоб уникнути помилок типу “key not found in key ring”
-// і щоб підписані cookie / токени не втрачались після рестарту.
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("/home/vagrant/Edo-Sign3/shared-keys"))
-    .SetApplicationName("EdoSign.Shared")
+    .SetApplicationName("EdoSign")        // 🔸 обов’язково так само як у клієнта!
     .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
 // =======================================================
-// 2. Політика для cookie (виправлення SameSite помилок)
+// 2. Політика cookie
 // =======================================================
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.MinimumSameSitePolicy = SameSiteMode.Lax;
-    options.HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.None;
-    options.Secure = Microsoft.AspNetCore.Http.CookieSecurePolicy.None;
+    options.HttpOnly = HttpOnlyPolicy.None;
+    options.Secure = CookieSecurePolicy.None; // бо HTTP
 });
 
 // =======================================================
@@ -72,15 +70,16 @@ builder.Services
     .AddInMemoryIdentityResources(Config.IdentityResources)
     .AddInMemoryApiScopes(Config.ApiScopes)
     .AddInMemoryClients(Config.Clients)
-    // Тимчасовий сертифікат для dev-середовища (HTTP)
-    .AddDeveloperSigningCredential(persistKey: true);
+    .AddDeveloperSigningCredential(
+        persistKey: true,
+        fileName: Path.Combine("/home/vagrant/Edo-Sign3/shared-keys", "tempkey.rsa") // 🔸 тепер стабільний шлях
+    );
 
 // =======================================================
 // 6. MVC + Razor Pages
 // =======================================================
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages()
-    .WithRazorPagesRoot("/EdoAuthServer.UI/Pages");
+builder.Services.AddRazorPages().WithRazorPagesRoot("/EdoAuthServer.UI/Pages");
 
 // =======================================================
 // 7. Build
@@ -91,13 +90,11 @@ var app = builder.Build();
 // 8. Middleware pipeline
 // =======================================================
 if (app.Environment.IsDevelopment())
-{
     app.UseDeveloperExceptionPage();
-}
 
 app.UseStaticFiles();
 app.UseRouting();
-app.UseCookiePolicy();          // важливо: до IdentityServer
+app.UseCookiePolicy();
 app.UseIdentityServer();
 app.UseAuthorization();
 
@@ -105,4 +102,3 @@ app.MapRazorPages();
 app.MapDefaultControllerRoute();
 
 app.Run();
-
