@@ -11,26 +11,33 @@ using System.IO;
 var builder = WebApplication.CreateBuilder(args);
 
 // =======================================================
-// 0. Загальні налаштування сервера
+// 0. Загальні налаштування
 // =======================================================
 builder.WebHost.UseUrls("http://0.0.0.0:7090");
 
 // =======================================================
-// 1. Спільне сховище ключів DataProtection
+// 1. Data Protection (спільне сховище ключів між проєктами)
 // =======================================================
+var sharedKeysPath = "/home/vagrant/Edo-Sign3/shared-keys";
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo("/home/vagrant/Edo-Sign3/shared-keys"))
-    .SetApplicationName("EdoSign")        // 🔸 обов’язково так само як у клієнта!
+    .PersistKeysToFileSystem(new DirectoryInfo(sharedKeysPath))
+    .SetApplicationName("EdoSign.Shared")
     .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
+// 🔹 Примусова перевірка створення ключів
+var dpProvider = DataProtectionProvider.Create(new DirectoryInfo(sharedKeysPath));
+var protector = dpProvider.CreateProtector("StartupTest");
+var testValue = protector.Protect("hello");
+Console.WriteLine($"🔐 DataProtection test OK, sample: {testValue.Substring(0, 10)}...");
+
 // =======================================================
-// 2. Політика cookie
+// 2. Політика для cookie
 // =======================================================
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.MinimumSameSitePolicy = SameSiteMode.Lax;
-    options.HttpOnly = HttpOnlyPolicy.None;
-    options.Secure = CookieSecurePolicy.None; // бо HTTP
+    options.HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.None;
+    options.Secure = Microsoft.AspNetCore.Http.CookieSecurePolicy.None;
 });
 
 // =======================================================
@@ -55,7 +62,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // =======================================================
-// 5. IdentityServer (Duende) + інтеграція з Identity
+// 5. IdentityServer (Duende)
 // =======================================================
 builder.Services
     .AddIdentityServer(options =>
@@ -70,16 +77,14 @@ builder.Services
     .AddInMemoryIdentityResources(Config.IdentityResources)
     .AddInMemoryApiScopes(Config.ApiScopes)
     .AddInMemoryClients(Config.Clients)
-    .AddDeveloperSigningCredential(
-        persistKey: true,
-        fileName: Path.Combine("/home/vagrant/Edo-Sign3/shared-keys", "tempkey.rsa") // 🔸 тепер стабільний шлях
-    );
+    .AddDeveloperSigningCredential(persistKey: true);
 
 // =======================================================
 // 6. MVC + Razor Pages
 // =======================================================
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages().WithRazorPagesRoot("/EdoAuthServer.UI/Pages");
+builder.Services.AddRazorPages()
+    .WithRazorPagesRoot("/EdoAuthServer.UI/Pages");
 
 // =======================================================
 // 7. Build
@@ -90,7 +95,9 @@ var app = builder.Build();
 // 8. Middleware pipeline
 // =======================================================
 if (app.Environment.IsDevelopment())
+{
     app.UseDeveloperExceptionPage();
+}
 
 app.UseStaticFiles();
 app.UseRouting();
@@ -102,3 +109,4 @@ app.MapRazorPages();
 app.MapDefaultControllerRoute();
 
 app.Run();
+
