@@ -17,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 // =======================================================
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("/home/vagrant/Edo-Sign3/shared-keys"))
-    .SetApplicationName("EdoSign")
+    .SetApplicationName("EdoSign")  // 🔸 має збігатися з AuthServer
     .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
 // =======================================================
@@ -49,7 +49,11 @@ builder.Services.AddAuthentication(options =>
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
 })
-.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, o =>
+{
+    o.Cookie.SameSite = SameSiteMode.Lax;
+    o.Cookie.SecurePolicy = CookieSecurePolicy.None; // 🔸 для HTTP
+})
 .AddOpenIdConnect("oidc", options =>
 {
     options.Authority = "http://localhost:7090";
@@ -116,5 +120,3 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
-
-
