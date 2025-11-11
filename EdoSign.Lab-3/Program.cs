@@ -7,8 +7,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// =======================================================
+// 0. Спільне сховище ключів DataProtection
+// =======================================================
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/home/vagrant/Edo-Sign3/shared-keys"))
+    .SetApplicationName("EdoSign")
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
 // =======================================================
 // 1. Database (SQLite)
@@ -17,7 +27,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(opt =>
         ?? "Data Source=app.db"));
 
 // =======================================================
-// 2. ASP.NET Identity (ëîêàëüí³ àêàóíòè)
+// 2. ASP.NET Identity (локальні акаунти)
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(opt =>
     {
@@ -33,26 +43,21 @@ builder.Services
     .AddDefaultTokenProviders();
 
 // =======================================================
-// 3. Authentication (SSO ÷åðåç EdoAuthServer)
+// 3. Authentication (SSO через EdoAuthServer)
 builder.Services.AddAuthentication(options =>
 {
-    // cookie-ñõåìà âèêîðèñòîâóºòüñÿ äëÿ ëîêàëüíî¿ àâòåíòèô³êàö³¿
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-
-    // êîëè êîðèñòóâà÷ íåàâòîðèçîâàíèé — ñèñòåìà âèêëèêàº SSO
     options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
 .AddOpenIdConnect("oidc", options =>
 {
-    // === Îñíîâí³ ïàðàìåòðè OpenID Connect ===
-    options.Authority = "http://localhost:7090"; // URL EdoAuthServer
-    options.RequireHttpsMetadata = false; 
+    options.Authority = "http://localhost:7090";
+    options.RequireHttpsMetadata = false;
     options.ClientId = "mvc";
     options.ClientSecret = "secret";
     options.ResponseType = "code";
 
-    // === Äîçâîëåí³ îáëàñò³ (ìàþòü çá³ãàòèñÿ ç Config.cs íà ñåðâåð³) ===
     options.Scope.Add("openid");
     options.Scope.Add("profile");
     options.Scope.Add("email");
@@ -62,12 +67,8 @@ builder.Services.AddAuthentication(options =>
     options.SaveTokens = true;
     options.GetClaimsFromUserInfoEndpoint = true;
 
-    // ?? Çàäàºìî, ÿê³ ïîëÿ âèêîðèñòîâóâàòè ÿê ³ì’ÿ êîðèñòóâà÷à / ðîëü
     options.TokenValidationParameters.NameClaimType = "preferred_username";
     options.TokenValidationParameters.RoleClaimType = "role";
-
-    // ?? Ï³ä ÷àñ ðîçðîáêè äîçâîëÿºìî ñàìîï³äïèñàíèé ñåðòèô³êàò
-    options.RequireHttpsMetadata = false;
 });
 
 // =======================================================
@@ -75,7 +76,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllersWithViews();
 
 // =======================================================
-// 5. Authorization (óñ³ ñòîð³íêè çàõèùåí³ çà ïîòðåáè)
+// 5. Authorization
 builder.Services.AddAuthorization();
 
 // =======================================================
@@ -88,7 +89,7 @@ builder.Services.AddScoped<CryptoService>();
 var app = builder.Build();
 
 // =======================================================
-// 8. DB auto-migration (ñòâîðåííÿ / îíîâëåííÿ ÁÄ)
+// 8. DB auto-migration
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -103,16 +104,17 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// app.UseHttpsRedirection();
+// ⚠️ HTTPS вимкнено, бо все працює через HTTP на локальній ВМ
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseAuthentication();   // ?? ñïî÷àòêó àâòåíòèô³êàö³ÿ
-app.UseAuthorization();    // ?? ïîò³ì àâòîðèçàö³ÿ
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
 
