@@ -42,7 +42,7 @@ public static class Config
 
             // OpenID Connect + PKCE
             AllowedGrantTypes = GrantTypes.Code,
-            RequirePkce = true,
+            RequirePkce = false,
             RequireClientSecret = true,
             ClientSecrets = { new Secret("secret".Sha256()) },
 
