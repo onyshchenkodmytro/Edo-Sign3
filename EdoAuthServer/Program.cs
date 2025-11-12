@@ -1,5 +1,4 @@
 using Duende.IdentityServer;
-using Duende.IdentityServer.Models;
 using EdoAuthServer.Data;
 using EdoAuthServer.Models;
 using Microsoft.AspNetCore.Identity;
@@ -21,23 +20,20 @@ builder.WebHost.UseUrls("http://0.0.0.0:7090");
 var sharedKeysPath = "/home/vagrant/Edo-Sign3/shared-keys";
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(sharedKeysPath))
-    .SetApplicationName("EdoSign.Shared")
+    .SetApplicationName("EdoSign")
     .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
-// 🔹 Примусова перевірка створення ключів
-var dpProvider = DataProtectionProvider.Create(new DirectoryInfo(sharedKeysPath));
-var protector = dpProvider.CreateProtector("StartupTest");
-var testValue = protector.Protect("hello");
-Console.WriteLine($"🔐 DataProtection test OK, sample: {testValue.Substring(0, 10)}...");
-
 // =======================================================
-// 2. Політика для cookie
+// 2. Cookie політика (для HTTP, без Secure, SameSite=Lax)
 // =======================================================
-builder.Services.Configure<CookiePolicyOptions>(options =>
+builder.Services.ConfigureApplicationCookie(o =>
 {
-    options.MinimumSameSitePolicy = SameSiteMode.Lax;
-    options.HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.None;
-    options.Secure = Microsoft.AspNetCore.Http.CookieSecurePolicy.None;
+    o.Cookie.SameSite = SameSiteMode.Lax;
+    o.Cookie.SecurePolicy = CookieSecurePolicy.None;
+});
+builder.Services.AddIdentityServer(options =>
+{
+    options.Authentication.CookieSameSiteMode = SameSiteMode.Lax;
 });
 
 // =======================================================
@@ -77,7 +73,8 @@ builder.Services
     .AddInMemoryIdentityResources(Config.IdentityResources)
     .AddInMemoryApiScopes(Config.ApiScopes)
     .AddInMemoryClients(Config.Clients)
-    .AddDeveloperSigningCredential(persistKey: true);
+    .AddDeveloperSigningCredential(persistKey: true,
+        fileName: Path.Combine(sharedKeysPath, "tempkey.rsa")); // 🔹 підпис у спільному каталозі
 
 // =======================================================
 // 6. MVC + Razor Pages
@@ -109,4 +106,3 @@ app.MapRazorPages();
 app.MapDefaultControllerRoute();
 
 app.Run();
-
