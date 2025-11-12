@@ -61,24 +61,26 @@ builder.Services.AddAuthentication(options =>
     o.Cookie.SameSite = SameSiteMode.None;           // 🔸 змінюємо на None
     o.Cookie.SecurePolicy = CookieSecurePolicy.None; // 🔸 HTTP дозволено
 })
-.AddOpenIdConnect("oidc", options =>
+
+    .AddOpenIdConnect("oidc", options =>
 {
-    options.Authority = "http://localhost:7090";  // SSO-сервер
+    options.Authority = "http://localhost:7090"; // EdoAuthServer
     options.RequireHttpsMetadata = false;
     options.ClientId = "mvc";
     options.ClientSecret = "secret";
     options.ResponseType = "code";
+    options.SaveTokens = true;
+
+    // 🔹 імітаційна обробка токенів (не перевіряємо підпис)
+    options.TokenValidationParameters.ValidateIssuer = false;
+    options.TokenValidationParameters.ValidateAudience = false;
+    options.TokenValidationParameters.SignatureValidator = (token, _) => new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(token);
 
     options.Scope.Add("openid");
     options.Scope.Add("profile");
     options.Scope.Add("email");
-    options.Scope.Add("custom_profile");
-    options.Scope.Add("edolab.api");
 
-    options.SaveTokens = true;
-    options.GetClaimsFromUserInfoEndpoint = true;
-
-    options.TokenValidationParameters.NameClaimType = "preferred_username";
-    options.TokenValidationParameters.RoleClaimType = "role";
+    options.GetClaimsFromUserInfoEndpoint = false;
 });
+
 
