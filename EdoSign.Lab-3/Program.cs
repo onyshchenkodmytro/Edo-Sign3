@@ -12,6 +12,11 @@ using System.IO;
 var builder = WebApplication.CreateBuilder(args);
 
 // =======================================================
+// 🔹 Додай цей рядок одразу після створення builder!
+// =======================================================
+AppContext.SetSwitch("Microsoft.AspNetCore.Authentication.SuppressSameSiteNone", true);
+
+// =======================================================
 // 0. Спільне сховище ключів DataProtection
 // =======================================================
 builder.Services.AddDataProtection()
@@ -53,13 +58,13 @@ builder.Services.AddAuthentication(options =>
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, o =>
 {
-    o.Cookie.SameSite = SameSiteMode.Lax;       // 🔸 головне: SameSite=Lax
-    o.Cookie.SecurePolicy = CookieSecurePolicy.None; // 🔸 дозволяємо HTTP
+    o.Cookie.SameSite = SameSiteMode.None;           // 🔸 змінюємо на None
+    o.Cookie.SecurePolicy = CookieSecurePolicy.None; // 🔸 HTTP дозволено
 })
 .AddOpenIdConnect("oidc", options =>
 {
     options.Authority = "http://localhost:7090";  // SSO-сервер
-    options.RequireHttpsMetadata = false;         // без HTTPS
+    options.RequireHttpsMetadata = false;
     options.ClientId = "mvc";
     options.ClientSecret = "secret";
     options.ResponseType = "code";
@@ -77,52 +82,3 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters.RoleClaimType = "role";
 });
 
-// =======================================================
-// 4. MVC + Views
-// =======================================================
-builder.Services.AddControllersWithViews();
-
-// =======================================================
-// 5. Authorization
-// =======================================================
-builder.Services.AddAuthorization();
-
-// =======================================================
-// 6. Dependency Injection
-// =======================================================
-builder.Services.AddSingleton<ISigner, RsaSigner>();
-builder.Services.AddScoped<CryptoService>();
-
-// =======================================================
-// 7. Build app
-// =======================================================
-var app = builder.Build();
-
-// =======================================================
-// 8. DB auto-migration
-// =======================================================
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-}
-
-// =======================================================
-// 9. Middleware pipeline
-// =======================================================
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
-
-app.UseStaticFiles();
-app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
-app.Run();
