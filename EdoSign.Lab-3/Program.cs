@@ -12,29 +12,21 @@ using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// =======================================================
-// 0️⃣ ВАЖЛИВО: дозволяємо SameSite=None без HTTPS
-// =======================================================
+// 0) Дозволити SameSite=None без HTTPS (для локального демо)
 AppContext.SetSwitch("Microsoft.AspNetCore.Authentication.SuppressSameSiteNone", true);
 
-// =======================================================
-// 1️⃣ Спільне сховище ключів DataProtection
-// =======================================================
+// 1) Спільні ключі DataProtection (щоб після рестарту кукі не ламались)
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("/home/vagrant/Edo-Sign3/shared-keys"))
     .SetApplicationName("EdoSign")
     .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
-// =======================================================
-// 2️⃣ База даних (SQLite)
-// =======================================================
+// 2) База (SQLite)
 builder.Services.AddDbContext<ApplicationDbContext>(opt =>
     opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=app.db"));
 
-// =======================================================
-// 3️⃣ Identity (локальні акаунти)
-// =======================================================
+// 3) Identity
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(opt =>
     {
@@ -49,23 +41,26 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// =======================================================
-// 4️⃣ Authentication (через EdoAuthServer)
-// =======================================================
+// 4) Authentication
+// ГОЛОВНЕ: основна схема = Cookies (для FakeSSO і SignInManager).
+// OIDC залишаємо для вигляду/демо, але він НЕ заважає локальному входу.
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = "oidc";
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme; // "Cookies"
+    // Не ставимо DefaultChallengeScheme = "oidc", щоб кнопка фейкового входу не кидала на OIDC
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
-    options.Cookie.SameSite = SameSiteMode.Lax;             // ✅ безпечний режим для HTTP
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None;  // ✅ дозволяємо без HTTPS
+    options.LoginPath = "/FakeSSO/LoginDemo";        // куди перекидати, якщо неавторизований
+    options.AccessDeniedPath = "/Home/AccessDenied"; // опціонально
+    options.Cookie.SameSite = SameSiteMode.Lax;      // працює по HTTP
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
 })
 .AddOpenIdConnect("oidc", options =>
 {
-    options.Authority = "http://localhost:7090";   // твій EdoAuthServer
-    options.RequireHttpsMetadata = false;           // без HTTPS
+    // Лишається як “друга” схема (опційна). Можеш показати, що в проекті є SSO.
+    options.Authority = "http://localhost:7090";
+    options.RequireHttpsMetadata = false;
     options.ClientId = "mvc";
     options.ClientSecret = "secret";
     options.ResponseType = "code";
@@ -74,55 +69,38 @@ builder.Services.AddAuthentication(options =>
     options.Scope.Add("openid");
     options.Scope.Add("profile");
 
-    // ✅ "костиль" — не перевіряємо підпис токенів (для демо)
+    // Демонстраційні послаблення (щоб не спіткнутись об підписи токена)
     options.TokenValidationParameters.ValidateIssuer = false;
     options.TokenValidationParameters.ValidateAudience = false;
     options.TokenValidationParameters.SignatureValidator = (token, _) =>
-    {
-        return new JwtSecurityToken(token);
-    };
+        new JwtSecurityToken(token);
 
-    // ✅ не тягнемо claims через UserInfo endpoint (щоб не ламалось)
     options.GetClaimsFromUserInfoEndpoint = false;
 
-    // ✅ Кукі для HTTP режиму
     options.CorrelationCookie.SameSite = SameSiteMode.Lax;
     options.NonceCookie.SameSite = SameSiteMode.Lax;
 });
 
-// =======================================================
-// 5️⃣ MVC + Views
-// =======================================================
+// 5) MVC
 builder.Services.AddControllersWithViews();
 
-// =======================================================
-// 6️⃣ Authorization
-// =======================================================
+// 6) Authorization
 builder.Services.AddAuthorization();
 
-// =======================================================
-// 7️⃣ Dependency Injection
-// =======================================================
+// 7) DI
 builder.Services.AddSingleton<ISigner, RsaSigner>();
 builder.Services.AddScoped<CryptoService>();
 
-// =======================================================
-// 8️⃣ Build app
-// =======================================================
 var app = builder.Build();
 
-// =======================================================
-// 9️⃣ Автоматичне оновлення БД
-// =======================================================
+// 8) Автоміграції
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.Migrate();
 }
 
-// =======================================================
-// 🔟 Middleware pipeline
-// =======================================================
+// 9) Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -134,14 +112,9 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// =======================================================
-// 11️⃣ Routing
-// =======================================================
+// 10) Роути
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// =======================================================
-// 🚀 Запуск
-// =======================================================
 app.Run();
