@@ -32,6 +32,9 @@ builder.Services.ConfigureApplicationCookie(o =>
     o.Cookie.SameSite = SameSiteMode.Lax;
     o.Cookie.SecurePolicy = CookieSecurePolicy.None;
 });
+
+AppContext.SetSwitch("Microsoft.AspNetCore.Authentication.SuppressSameSiteNone", true);
+
 builder.Services.AddIdentityServer(options =>
 {
     options.Authentication.CookieSameSiteMode = SameSiteMode.Lax;
