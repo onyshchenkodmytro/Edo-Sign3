@@ -18,9 +18,8 @@ builder.WebHost.UseUrls("http://0.0.0.0:7090");
 // =======================================================
 // 1. Data Protection (спільне сховище ключів між проєктами)
 // =======================================================
-var sharedKeysPath = "/home/vagrant/Edo-Sign3/shared-keys";
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(sharedKeysPath))
+    .PersistKeysToFileSystem(new DirectoryInfo("/home/vagrant/Edo-Sign3/shared-keys"))
     .SetApplicationName("EdoSign")
     .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
