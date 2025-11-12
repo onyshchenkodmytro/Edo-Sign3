@@ -4,7 +4,6 @@ using EdoSign.Signing;
 using EdoSign.Lab_3.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
@@ -17,17 +16,19 @@ var builder = WebApplication.CreateBuilder(args);
 // =======================================================
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("/home/vagrant/Edo-Sign3/shared-keys"))
-    .SetApplicationName("EdoSign")  // 🔸 має збігатися з AuthServer
+    .SetApplicationName("EdoSign")
     .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
 // =======================================================
 // 1. Database (SQLite)
+// =======================================================
 builder.Services.AddDbContext<ApplicationDbContext>(opt =>
     opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=app.db"));
 
 // =======================================================
 // 2. ASP.NET Identity (локальні акаунти)
+// =======================================================
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(opt =>
     {
@@ -44,6 +45,7 @@ builder.Services
 
 // =======================================================
 // 3. Authentication (SSO через EdoAuthServer)
+// =======================================================
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -51,13 +53,13 @@ builder.Services.AddAuthentication(options =>
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, o =>
 {
-    o.Cookie.SameSite = SameSiteMode.Lax;
-    o.Cookie.SecurePolicy = CookieSecurePolicy.None; // 🔸 для HTTP
+    o.Cookie.SameSite = SameSiteMode.Lax;       // 🔸 головне: SameSite=Lax
+    o.Cookie.SecurePolicy = CookieSecurePolicy.None; // 🔸 дозволяємо HTTP
 })
 .AddOpenIdConnect("oidc", options =>
 {
-    options.Authority = "http://localhost:7090";
-    options.RequireHttpsMetadata = false;
+    options.Authority = "http://localhost:7090";  // SSO-сервер
+    options.RequireHttpsMetadata = false;         // без HTTPS
     options.ClientId = "mvc";
     options.ClientSecret = "secret";
     options.ResponseType = "code";
@@ -77,23 +79,28 @@ builder.Services.AddAuthentication(options =>
 
 // =======================================================
 // 4. MVC + Views
+// =======================================================
 builder.Services.AddControllersWithViews();
 
 // =======================================================
 // 5. Authorization
+// =======================================================
 builder.Services.AddAuthorization();
 
 // =======================================================
 // 6. Dependency Injection
+// =======================================================
 builder.Services.AddSingleton<ISigner, RsaSigner>();
 builder.Services.AddScoped<CryptoService>();
 
 // =======================================================
 // 7. Build app
+// =======================================================
 var app = builder.Build();
 
 // =======================================================
 // 8. DB auto-migration
+// =======================================================
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -102,13 +109,12 @@ using (var scope = app.Services.CreateScope())
 
 // =======================================================
 // 9. Middleware pipeline
-if (!app.Environment.IsDevelopment())
+// =======================================================
+if (app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    app.UseDeveloperExceptionPage();
 }
 
-// ⚠️ HTTPS вимкнено, бо все працює через HTTP на локальній ВМ
 app.UseStaticFiles();
 app.UseRouting();
 
