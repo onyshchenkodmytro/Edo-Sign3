@@ -1,0 +1,35 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using EdoSign.Lab_3.Models;
+
+namespace EdoSign.Lab_3.Controllers
+{
+    public class FakeSSOController : Controller
+    {
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public FakeSSOController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+        {
+            _signInManager = signInManager;
+            _userManager = userManager;
+        }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> LoginDemo()
+        {
+            var user = await _userManager.FindByNameAsync("Login111");
+            if (user == null)
+            {
+                user = new ApplicationUser { UserName = "Login111", Email = "demo@local" };
+                await _userManager.CreateAsync(user, "Demo123!");
+            }
+
+            await _signInManager.SignInAsync(user, isPersistent: false);
+
+            // просто редірект на головну, ніби після SSO
+            return RedirectToAction("Index", "Home");
+        }
+    }
+}
