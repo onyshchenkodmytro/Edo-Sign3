@@ -36,6 +36,17 @@ builder.Services.AddIdentityServer(options =>
     options.Authentication.CookieSameSiteMode = SameSiteMode.Lax;
 });
 
+builder.Services.PostConfigure<CookieAuthenticationOptions>(IdentityServerConstants.DefaultCookieAuthenticationScheme, options =>
+{
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+});
+
+builder.Services.PostConfigure<CookieAuthenticationOptions>(IdentityServerConstants.ExternalCookieAuthenticationScheme, options =>
+{
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+});
 // =======================================================
 // 3. База даних
 // =======================================================
